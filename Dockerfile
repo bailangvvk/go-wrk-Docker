@@ -2,8 +2,7 @@
 # 使用 busybox:musl 作为基础镜像，提供基本shell环境
 
 # 构建阶段 - 使用完整的构建环境
-# FROM golang:1.24-alpine AS builder
-FROM golang:alpine AS builder
+FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
@@ -15,31 +14,32 @@ RUN apk add --no-cache --virtual .build-deps \
     git \
     build-base \
     # 包含strip命令
-    binutils \
-    && \
-    \
-    # 直接下载并构建 go-wrk（无需本地源代码）
-    git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
-    \
-    && \
-    \
-    CGO_ENABLED=1 go build \
+    binutils
+
+# 直接下载并构建 go-wrk（无需本地源代码）
+RUN git clone --depth 1 https://github.com/tsliwowicz/go-wrk .
+
+# 构建静态二进制文件
+RUN CGO_ENABLED=1 go build \
     -tags extended,netgo,osusergo \
     -ldflags="-s -w -extldflags -static" \
-    -o go-wrk \
-    && \
-    # 使用strip进一步减小二进制文件大小
-    strip --strip-all go-wrk \
-    && \
-    # 验证二进制文件是否为静态链接
-    ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
-        && \
-        echo "Static binary confirmed" || echo "Not a static binary" \
-        && \
-        # 显示优化后的文件大小
-        ls -lh go-wrk && echo "Binary size after stripping: $(stat -c%s go-wrk) bytes" \
-    \
-    && apk del --purge .build-deps \
+    -o go-wrk
+
+# 验证二进制文件是否存在
+RUN test -f go-wrk && echo "Binary built successfully" || (echo "Binary not found" && exit 1)
+
+# 使用strip进一步减小二进制文件大小
+RUN strip --strip-all go-wrk
+
+# 验证二进制文件是否为静态链接
+RUN ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
+    && echo "Static binary confirmed" || echo "Not a static binary"
+
+# 显示优化后的文件大小
+RUN ls -lh go-wrk && echo "Binary size after stripping: $(stat -c%s go-wrk) bytes"
+
+# 清理构建依赖
+RUN apk del --purge .build-deps \
     && rm -rf /var/cache/apk/*
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
