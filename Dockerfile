@@ -45,7 +45,7 @@ FROM busybox:musl
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # 复制经过strip优化的go-wrk二进制文件
-COPY --from=builder /app/go-wrk /app/go-wrk
+COPY --from=builder /app/go-wrk /app/
 
 # 创建非root用户（增强安全性）
 RUN adduser -D -u 1000 gowrk
