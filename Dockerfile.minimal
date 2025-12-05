@@ -1,0 +1,41 @@
+# 最小化的go-wrk Docker镜像
+# 使用多阶段构建和scratch基础镜像
+
+# 构建阶段 - 使用完整的Go构建环境
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+
+# 安装最小构建依赖
+RUN apk add --no-cache --virtual .build-deps \
+    gcc \
+    musl-dev \
+    git
+
+# 下载go-wrk源代码
+RUN git clone --depth 1 https://github.com/tsliwowicz/go-wrk .
+
+# 构建静态二进制文件（无需C++编译器）
+RUN CGO_ENABLED=1 go build \
+    -tags extended,netgo,osusergo \
+    -ldflags="-s -w -extldflags -static" \
+    -o go-wrk
+
+# 验证是否为静态二进制
+RUN ldd go-wrk 2>&1 | grep -q "not a dynamic executable" && \
+    echo "Static binary confirmed" || echo "Warning: Not a static binary"
+
+# 显示二进制大小
+RUN du -h go-wrk
+
+# 运行时阶段 - 使用scratch（最小镜像）
+FROM scratch
+
+# 复制CA证书（用于HTTPS请求）
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# 复制go-wrk二进制文件
+COPY --from=builder /app/go-wrk /go-wrk
+
+# 设置入口点
+ENTRYPOINT ["/go-wrk"]
