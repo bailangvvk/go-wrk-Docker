@@ -2,8 +2,8 @@
 # 使用 busybox:musl 作为基础镜像，提供基本shell环境
 
 # 构建阶段 - 使用完整的构建环境
-# FROM golang:1.21-alpine AS builder
-FROM golang:1.25-alpine AS builder
+FROM golang:1.21-alpine AS builder
+# FROM golang:1.25-alpine AS builder
 
 
 WORKDIR /app
@@ -20,9 +20,11 @@ RUN set -eux && apk add --no-cache --virtual .build-deps \
     # 直接下载并构建 go-wrk（无需本地源代码）
     && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
     # 构建静态二进制文件
-    && CGO_ENABLED=1 go build \
+    # && CGO_ENABLED=1 go build \
+    && CGO_ENABLED=0 go build \
     -tags extended,netgo,osusergo \
-    -ldflags="-s -w -extldflags -static" \
+    # -ldflags="-s -w -extldflags -static" \
+    -ldflags="-s -w" \
     -o go-wrk \
     # 验证二进制文件是否存在
     # && test -f go-wrk && echo "Binary built successfully" || (echo "Binary not found" && exit 1) \
