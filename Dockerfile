@@ -43,12 +43,13 @@ RUN apk add --no-cache --virtual .build-deps \
     && rm -rf /var/cache/apk/*
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
-FROM busybox:musl
+# FROM busybox:musl
+FROM alpine:latest
 
 # 复制CA证书（用于HTTPS请求）
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# 复制经过strip优化的Hugo二进制文件
+# 复制经过strip优化的go-wrk二进制文件
 COPY --from=builder /app/go-wrk /usr/local/bin/go-wrk
 
 # 创建非root用户（增强安全性）
