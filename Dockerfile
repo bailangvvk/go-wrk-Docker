@@ -2,8 +2,8 @@
 # 使用 busybox:musl 作为基础镜像，提供基本shell环境
 
 # 构建阶段 - 使用完整的构建环境
-# FROM golang:1.21-alpine AS builder
-FROM golang:1.25-alpine AS builder
+FROM golang:1.21-alpine AS builder
+# FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
