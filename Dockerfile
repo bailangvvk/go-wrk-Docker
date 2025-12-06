@@ -20,7 +20,8 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     # 构建静态二进制文件
     # 移除UPX，因为它会增加运行时内存且实际压缩效果可能有限
     # 使用更激进的编译优化
-    && CGO_ENABLED=0 go build \
+    # && CGO_ENABLED=0 go build \
+    && CGO_ENABLED=1 go build \
     -trimpath \
     -tags extended,netgo,osusergo \
     # 确保完全静态链接，减小最终二进制大小
