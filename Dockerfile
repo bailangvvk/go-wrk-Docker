@@ -22,9 +22,10 @@ RUN set -eux && apk add --no-cache --virtual .build-deps \
     # 构建静态二进制文件
     # && CGO_ENABLED=1 go build \
     && CGO_ENABLED=0 go build \
+    -trimpath \
     -tags extended,netgo,osusergo \
     # -ldflags="-s -w -extldflags -static" \
-    -ldflags="-s -w  -trimpath" \
+    -ldflags="-s -w" \
     -o go-wrk \
     # 验证二进制文件是否存在
     # && test -f go-wrk && echo "Binary built successfully" || (echo "Binary not found" && exit 1) \
