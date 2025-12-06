@@ -14,7 +14,7 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     git \
     # 包含strip命令
     binutils \
-    # upx \
+    upx \
     # 直接下载并构建 go-wrk（无需本地源代码）
     && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
     # 构建静态二进制文件
@@ -33,10 +33,9 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     && strip --strip-all go-wrk \
     && echo "Binary size after stripping:" \
     && du -h go-wrk \
-    
     # # 验证是否为静态二进制
     # && (ldd go-wrk 2>&1 | grep -q "not a dynamic executable" && echo "Static binary confirmed" || echo "Warning: Not a static binary") \
-    # && upx --best --lzma go-wrk \
+    && upx --best --lzma go-wrk \
     # 验证二进制文件是否为静态链接
     # && ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
     # && echo "Static binary confirmed" || echo "Not a static binary" \
