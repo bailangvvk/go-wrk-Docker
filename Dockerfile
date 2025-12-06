@@ -8,7 +8,8 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 # 安装构建依赖（包括C++编译器和strip工具）
-RUN set -eux && apk add --no-cache --virtual .build-deps \
+# 使用--no-scripts禁用触发器执行，避免busybox触发器在arm64架构下的兼容性问题
+RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     gcc \
     g++ \
     musl-dev \
