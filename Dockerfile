@@ -16,21 +16,18 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     git \
     build-base \
     # 包含strip命令
-    binutils
-
-# 直接下载并构建 go-wrk（无需本地源代码）
-RUN git clone --depth 1 https://github.com/tsliwowicz/go-wrk .
-
-# 构建静态二进制文件
-# && CGO_ENABLED=1 go build \
-RUN CGO_ENABLED=0 go build \
+    binutils \
+    # 直接下载并构建 go-wrk（无需本地源代码）
+    && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
+    # 构建静态二进制文件
+    # && CGO_ENABLED=1 go build \
+    && CGO_ENABLED=0 go build \
     -tags extended,netgo,osusergo \
     # -ldflags="-s -w -extldflags -static" \
     -ldflags="-s -w" \
-    -o go-wrk
-
-# 验证二进制文件大小并使用strip进一步减小二进制文件大小
-RUN du -h go-wrk \
+    -o go-wrk \
+    # 验证二进制文件大小并使用strip进一步减小二进制文件大小
+    && du -h go-wrk \
     && strip --strip-all go-wrk \
     && du -h go-wrk
 
