@@ -29,16 +29,19 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     -o go-wrk \
     # 显示构建后的文件大小
     && echo "Binary size after build:" \
-    && du -h go-wrk \
+    # && du -h go-wrk \
+    && du -b go-wrk \
     # 使用strip进一步减小二进制文件大小
     && strip --strip-all go-wrk \
     && echo "Binary size after stripping:" \
-    && du -h go-wrk \
+    # && du -h go-wrk \
+    && du -b go-wrk \
     # # 验证是否为静态二进制
     # && (ldd go-wrk 2>&1 | grep -q "not a dynamic executable" && echo "Static binary confirmed" || echo "Warning: Not a static binary") \
     && upx --best --lzma go-wrk \
     && echo "Binary size after upx:" \
-    && du -h go-wrk \
+    # && du -h go-wrk \
+    && du -b go-wrk \
     # 验证二进制文件是否为静态链接
     # && ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
     # && echo "Static binary confirmed" || echo "Not a static binary" \
