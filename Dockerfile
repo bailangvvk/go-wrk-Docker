@@ -37,6 +37,8 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     # # 验证是否为静态二进制
     # && (ldd go-wrk 2>&1 | grep -q "not a dynamic executable" && echo "Static binary confirmed" || echo "Warning: Not a static binary") \
     && upx --best --lzma go-wrk \
+    && echo "Binary size after upx:" \
+    && du -h go-wrk \
     # 验证二进制文件是否为静态链接
     # && ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
     # && echo "Static binary confirmed" || echo "Not a static binary" \
