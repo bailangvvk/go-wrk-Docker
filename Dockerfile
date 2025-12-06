@@ -39,10 +39,12 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     && upx --best --lzma go-wrk \
     && echo "Binary size after upx:" \
     # && du -h go-wrk \
-    && du -b go-wrk \
-    # 清理构建依赖
-    && apk del --purge .build-deps \
-    && rm -rf /var/cache/apk/*
+    && du -b go-wrk
+    # 注意：这里故意不清理构建依赖，因为是多阶段构建，且清理会触发busybox触发器错误
+    # 最终镜像只复制二进制文件，构建阶段的中间层不会影响最终镜像大小
+    # # 清理构建依赖
+    # && apk del --purge .build-deps \
+    # && rm -rf /var/cache/apk/*
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
 # FROM busybox:musl
