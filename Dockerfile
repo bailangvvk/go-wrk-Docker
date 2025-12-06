@@ -7,33 +7,36 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# 安装构建依赖（包括C++编译器和strip工具）
-RUN set -eux && apk add --no-cache --virtual .build-deps \
+# 安装最小构建依赖（避免busybox触发器问题，使用--no-scripts）
+RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     gcc \
-    g++ \
     musl-dev \
     git \
-    build-base \
     # 包含strip命令
     binutils \
-    upx \
+    # upx \
     # 直接下载并构建 go-wrk（无需本地源代码）
     && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
     # 构建静态二进制文件
-    # && CGO_ENABLED=1 go build \
+    # 移除UPX，因为它会增加运行时内存且实际压缩效果可能有限
+    # 使用更激进的编译优化
     && CGO_ENABLED=0 go build \
     -trimpath \
     -tags extended,netgo,osusergo \
-    # -ldflags="-s -w -extldflags -static" \
-    -ldflags="-s -w" \
+    # 确保完全静态链接，减小最终二进制大小
+    -ldflags="-s -w -extldflags=-static" \
     -o go-wrk \
-    # 验证二进制文件是否存在
-    # && test -f go-wrk && echo "Binary built successfully" || (echo "Binary not found" && exit 1) \
+    # 显示构建后的文件大小
+    && echo "Binary size after build:" \
     && du -h go-wrk \
     # 使用strip进一步减小二进制文件大小
     && strip --strip-all go-wrk \
+    && echo "Binary size after stripping:" \
     && du -h go-wrk \
-    && upx --best --lzma go-wrk \
+    
+    # # 验证是否为静态二进制
+    # && (ldd go-wrk 2>&1 | grep -q "not a dynamic executable" && echo "Static binary confirmed" || echo "Warning: Not a static binary") \
+    # && upx --best --lzma go-wrk \
     # 验证二进制文件是否为静态链接
     # && ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
     # && echo "Static binary confirmed" || echo "Not a static binary" \
