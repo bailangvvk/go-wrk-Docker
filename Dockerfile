@@ -15,30 +15,23 @@ RUN set -eux && apk add --no-cache --virtual .build-deps \
     git \
     build-base \
     # 包含strip命令
-    binutils \
-    # 直接下载并构建 go-wrk（无需本地源代码）
-    && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
-    # 构建静态二进制文件
-    # && CGO_ENABLED=1 go build \
-    && CGO_ENABLED=0 go build \
+    binutils
+
+# 直接下载并构建 go-wrk（无需本地源代码）
+RUN git clone --depth 1 https://github.com/tsliwowicz/go-wrk .
+
+# 构建静态二进制文件
+# && CGO_ENABLED=1 go build \
+RUN CGO_ENABLED=0 go build \
     -tags extended,netgo,osusergo \
     # -ldflags="-s -w -extldflags -static" \
     -ldflags="-s -w" \
-    -o go-wrk \
-    # 验证二进制文件是否存在
-    # && test -f go-wrk && echo "Binary built successfully" || (echo "Binary not found" && exit 1) \
-    && du -h go-wrk \
-    # 使用strip进一步减小二进制文件大小
+    -o go-wrk
+
+# 验证二进制文件大小并使用strip进一步减小二进制文件大小
+RUN du -h go-wrk \
     && strip --strip-all go-wrk \
-    && du -h go-wrk \
-    # 验证二进制文件是否为静态链接
-    # && ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
-    # && echo "Static binary confirmed" || echo "Not a static binary" \
-    # 显示优化后的文件大小
-    # && ls -lh go-wrk && echo "Binary size after stripping: $(stat -c%s go-wrk) bytes" \
-    # 清理构建依赖
-    && apk del --purge .build-deps \
-    && rm -rf /var/cache/apk/*
+    && du -h go-wrk
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
 # FROM busybox:musl

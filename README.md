@@ -7,7 +7,7 @@
 ### 基本用法
 
 ```
-./go-wrk -c 2048 -d 10 http://localhost:8080/plaintext
+./go-wrk -c 10 -d 10 http://localhost:8080/plaintext
 ```
 
 ### Docker 用法
@@ -18,7 +18,7 @@ docker run \
 --rm \
 --network host \
 bailangvvking/go-wrk \
--c 2048 -d 10 http://127.0.0.1:80
+-c 10 -d 10 http://127.0.0.1:80
 ```
 
 ## 命令行选项
