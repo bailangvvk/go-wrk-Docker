@@ -17,19 +17,32 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     build-base \
     # 包含strip命令
     binutils \
+    upx \
     # 直接下载并构建 go-wrk（无需本地源代码）
     && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
     # 构建静态二进制文件
     # && CGO_ENABLED=1 go build \
-    && CGO_ENABLED=0 go build \
+    && CGO_ENABLED=1 go build \
     -tags extended,netgo,osusergo \
     # -ldflags="-s -w -extldflags -static" \
     -ldflags="-s -w" \
     -o go-wrk \
-    # 验证二进制文件大小并使用strip进一步减小二进制文件大小
-    && du -h go-wrk \
+    # 显示构建后的文件大小
+    && echo "Binary size after build:" \
+    # && du -h go-wrk \
+    && du -b go-wrk \
+    # 使用strip进一步减小二进制文件大小
     && strip --strip-all go-wrk \
-    && du -h go-wrk
+    && echo "Binary size after stripping:" \
+    # && du -h go-wrk \
+    && du -b go-wrk \
+    && upx --best --lzma go-wrk \
+    && echo "Binary size after upx:" \
+    # && du -h go-wrk \
+    && du -b go-wrk \
+    # 清理构建依赖
+    && apk del --purge .build-deps \
+    && rm -rf /var/cache/apk/*
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
 # FROM busybox:musl
