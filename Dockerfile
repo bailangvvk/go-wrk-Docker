@@ -24,8 +24,8 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     # && CGO_ENABLED=1 go build \
     && CGO_ENABLED=1 go build \
     -tags extended,netgo,osusergo \
-    # -ldflags="-s -w -extldflags -static" \
-    -ldflags="-s -w" \
+    -ldflags="-s -w -extldflags -static" \
+    # -ldflags="-s -w" \
     -o go-wrk \
     # 显示构建后的文件大小
     && echo "Binary size after build:" \
