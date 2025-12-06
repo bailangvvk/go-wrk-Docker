@@ -7,7 +7,8 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# 安装最小构建依赖（避免busybox触发器问题，使用--no-scripts）
+# 安装最小构建依赖（使用--no-scripts避免busybox触发器问题）
+# 注意：由于是多阶段构建，我们不在构建阶段清理依赖，以避免触发器错误
 RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     gcc \
     musl-dev \
@@ -18,38 +19,26 @@ RUN set -eux && apk add --no-cache --no-scripts --virtual .build-deps \
     # 直接下载并构建 go-wrk（无需本地源代码）
     && git clone --depth 1 https://github.com/tsliwowicz/go-wrk . \
     # 构建静态二进制文件
-    # 移除UPX，因为它会增加运行时内存且实际压缩效果可能有限
-    # 使用更激进的编译优化
-    # && CGO_ENABLED=0 go build \
+    # 使用CGO_ENABLED=1配合静态链接，可能生成更小的二进制文件
     && CGO_ENABLED=1 go build \
     -trimpath \
     -tags extended,netgo,osusergo \
     # 确保完全静态链接，减小最终二进制大小
     -ldflags="-s -w -extldflags=-static" \
     -o go-wrk \
-    # 显示构建后的文件大小
+    # 显示构建后的文件大小（字节）
     && echo "Binary size after build:" \
-    # && du -h go-wrk \
     && du -b go-wrk \
     # 使用strip进一步减小二进制文件大小
     && strip --strip-all go-wrk \
     && echo "Binary size after stripping:" \
-    # && du -h go-wrk \
     && du -b go-wrk \
-    # # 验证是否为静态二进制
-    # && (ldd go-wrk 2>&1 | grep -q "not a dynamic executable" && echo "Static binary confirmed" || echo "Warning: Not a static binary") \
+    # 使用UPX压缩（显著减小文件大小，运行时性能无实质影响）
     && upx --best --lzma go-wrk \
-    && echo "Binary size after upx:" \
-    # && du -h go-wrk \
-    && du -b go-wrk \
-    # 验证二进制文件是否为静态链接
-    # && ldd go-wrk 2>&1 | grep -q "not a dynamic executable" \
-    # && echo "Static binary confirmed" || echo "Not a static binary" \
-    # 显示优化后的文件大小
-    # && ls -lh go-wrk && echo "Binary size after stripping: $(stat -c%s go-wrk) bytes" \
-    # 清理构建依赖
-    && apk del --purge .build-deps \
-    && rm -rf /var/cache/apk/*
+    && echo "Binary size after UPX:" \
+    && du -b go-wrk
+    # 注意：这里故意不清理构建依赖，因为是多阶段构建，且清理会触发busybox触发器错误
+    # 最终镜像只复制二进制文件，构建阶段的中间层不会影响最终镜像大小
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
 # FROM busybox:musl
